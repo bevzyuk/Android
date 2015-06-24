@@ -42,14 +42,14 @@ public class HttpActivity extends ListActivity {
         protected List<String> doInBackground(Void... params) {
 
             HttpGet request = new HttpGet(URL);
-
+/*
             try {
                 mClient.execute();
             } catch (IOException e) {
 
             }
 
-
+*/
 
           //  JSONResponseHandler responseHandler = new JSONResponseHandler();
             return null;
