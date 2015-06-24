@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import org.apache.http.client.methods.HttpGet;
 
+import java.io.IOException;
 import java.util.List;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -44,6 +45,8 @@ public class HttpActivity extends ListActivity {
 
             try {
                 mClient.execute();
+            } catch (IOException e) {
+
             }
 
 
