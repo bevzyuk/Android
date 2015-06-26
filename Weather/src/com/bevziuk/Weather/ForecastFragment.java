@@ -1,31 +1,32 @@
 package com.bevziuk.Weather;
 
 import android.app.Fragment;
+import android.content.Intent;
 import android.net.Uri;
-import android.nfc.Tag;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.sax.StartElementListener;
 import android.text.format.Time;
 import android.util.Log;
 import android.view.*;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 
 
 
@@ -89,10 +90,31 @@ public class ForecastFragment extends Fragment{
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         listView.setAdapter(mForecastAdapter);
 
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                String forecast = mForecastAdapter.getItem(position);
+                Intent intent = new Intent(getActivity(), DetailActivity.class)
+                        .putExtra(Intent.EXTRA_TEXT,forecast);
+                startActivity(intent);
+
+            }
+        });
+
         return rootView;
     }
 
     public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
+        @Override
+        protected void onPostExecute(String[] result) {
+            if (result != null) {
+                mForecastAdapter.clear();
+                for (String dayForecastStr : result) {
+                    mForecastAdapter.add(dayForecastStr);
+                }
+            }
+        }
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
@@ -116,7 +138,7 @@ public class ForecastFragment extends Fragment{
             final String OWM_TEMPERATURE = "temp";
             final String OWM_MAX = "max";
             final String OWM_MIN = "min";
-            final String OWM_DESCRIPTION = "main";
+            final String OWM_DESCRIPTION = "description";
 
             JSONObject forecastJSON = new JSONObject(forecastJsonStr);
             JSONArray weatherArray = forecastJSON.getJSONArray(OWN_LIST);
@@ -150,9 +172,7 @@ public class ForecastFragment extends Fragment{
                 highAndLow = formatHightLows(high, low);
                 resultStrs[i] = day + " - " + description + " - " + highAndLow;
             }
-            for (String s : resultStrs) {
-                Log.v(LOG_TAG, "Forecast entery " + s);
-            }
+
             return resultStrs;
         }
 
@@ -161,17 +181,19 @@ public class ForecastFragment extends Fragment{
 
         protected String[] doInBackground(String... params) {
 
-            HttpsURLConnection urlConnection = null;
+            HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
             String forecastJsonStr = null;
+
             String format = "json";
             String units = "metric";
             int numDays = 7;
+            String lang = "ua";
 
             try {
 
                 final int ID = 703448; //Kiev
-                final String QUERY_PARAM = "q";
+                final String QUERY_PARAM = "id";
                 final String FORMAT_PARAM = "mode";
                 final String DAYS_PARAM = "cnt"; //7 days
                 final String METRIC = "units";
@@ -183,11 +205,12 @@ public class ForecastFragment extends Fragment{
                         .appendQueryParameter(FORMAT_PARAM, format)
                         .appendQueryParameter(METRIC, units)
                         .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
+                        .appendQueryParameter(LANG,lang)
                         .build();
                 URL url = new URL(builtUri.toString());
-                Log.v(LOG_TAG, "Built URI " + builtUri.toString());
+             //   Log.v(LOG_TAG, "Built URI " + builtUri.toString());
 
-                urlConnection = (HttpsURLConnection) url.openConnection();
+                urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("GET");
                 urlConnection.connect();
 
